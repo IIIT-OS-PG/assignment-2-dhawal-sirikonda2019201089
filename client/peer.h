@@ -100,6 +100,6 @@ struct peer_data
     map<string, set< pair<int, chunks_meta*>,pair_cmp>*> file_map;
 };
 
-int client_work(int*, peer_data*, pthread_mutex_t);
+int client_work(int*, peer_data*, pthread_mutex_t)
 
 #endif //!CLIENT_H_
