@@ -86,7 +86,7 @@ struct pair_cmp
     }
 };
 
-struct download_file
+struct download_file_struct
 {
     int chunk_number;
     char ip[20];
