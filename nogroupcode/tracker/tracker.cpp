@@ -100,11 +100,28 @@ int tracker(map<int, login_struct*>& usr_map, map<int, login_struct*>& live_user
                     recv(client_socket, current_chunk, sizeof(chunk_meta), 0);
                     char *filename = (char*)calloc(sizeof(char), 50);
                     strncpy(filename, current_chunk->filename, 50);
-                    
+                    if(userfilemap[current_chunk->uid]->find(string(filename))!=userfilemap[current_chunk->uid]->end())
+                    {
+                        userfilemap[current_chunk->uid]->insert(string(filename));
+                        file_chunkmap[string(filename)] = new vector<chunk_meta*>();
+                    }
+                    file_chunkmap[string(filename)]->push_back(current_chunk);
                 }
             }
         }
+        if(command_type == 5)
+        {
+            live_user_map[]
+        }
         close(client_socket);
+        printf("want to list files yes/no (1|0)\t");
+        int list =-1;
+        scanf("%d", &list);
+        if(list == 1)
+        {
+            for(auto i : file_chunkmap)
+                printf("%s\n", i.first.c_str());
+        }
         // printf("want to continue/exit?1:0\t");
         // int option = -1;
         // scanf("%d",&option);

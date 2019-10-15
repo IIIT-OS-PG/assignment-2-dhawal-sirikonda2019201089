@@ -155,6 +155,7 @@ int peer_client(map<string, vector<chunk_meta*>*>& peer_data_map,int *login_stat
                 }
                 close(fd);
                 free(buffer);
+                close(sock_fd);
             }
             else
             {
@@ -237,7 +238,7 @@ int peer_client(map<string, vector<chunk_meta*>*>& peer_data_map,int *login_stat
         {
             if(*login_status)
             {
-
+                
             }
             else
             {
@@ -248,6 +249,16 @@ int peer_client(map<string, vector<chunk_meta*>*>& peer_data_map,int *login_stat
         {
             if(*login_status)
             {
+                while((sock_fd = socket(AF_INET, SOCK_STREAM,0))==-1)
+                    printf("socket creation error\n");
+
+                while(connect(sock_fd, (sockaddr*)server, sizeof(sockaddr))==-1)
+                    printf("connect failed\n");
+
+                
+                while(sizeof(int)!=send(sock_fd, &option, sizeof(int),0))
+                    printf("send error for command\n");
+                close(sock_fd);
                 int fd = open(to_string(usr_id).c_str(), O_CREAT|O_WRONLY|O_TRUNC, 0644);
                 if(fd<0)
                 {
