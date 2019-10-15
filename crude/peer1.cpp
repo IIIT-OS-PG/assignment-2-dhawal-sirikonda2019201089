@@ -43,7 +43,9 @@ void *routine(void* args)
         int fd = open("samplefile", O_RDONLY);
         lseek(fd, (chunk_num-1)*chunk_sz,SEEK_SET);
         void *buffer = (void*)calloc(sizeof(char),chunk_sz);
-        read()
+        int read_by = read(fd, buffer, chunk_sz);
+        send(cli_sock, buffer, read_by,0);
+        close(cli_sock);
     }
 }
 
