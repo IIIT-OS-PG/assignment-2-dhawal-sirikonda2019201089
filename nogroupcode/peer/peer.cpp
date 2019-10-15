@@ -204,7 +204,9 @@ int peer_client(map<string, vector<chunk_meta*>*>& peer_data_map,int *login_stat
                 char *buffer = (char*)calloc(CHUNK_SIZE, sizeof(char));
                 int read_bytes =0;
                 int chunk_num=1;
-                
+                int total_chunks = ceil(stat_buff->st_size/CHUNK_SIZE);
+                while(sizeof(int)!=send(sock_fd, &total_chunks, sizeof(int), 0))
+                    printf("send numof chunks failed\n");
                 while((read_bytes = read(fd, buffer, CHUNK_SIZE))>0)
                 {
                     chunk_meta *current_chunk_meta = (chunk_meta*)calloc(sizeof(chunk_meta),1);

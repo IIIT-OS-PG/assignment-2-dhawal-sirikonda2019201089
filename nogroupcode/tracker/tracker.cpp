@@ -90,7 +90,19 @@ int tracker(map<int, login_struct*>& usr_map, map<int, login_struct*>& live_user
 
         if(command_type == 3)
         {
-            
+            int numofrecv = -1;
+            recv(client_socket, &numofrecv, sizeof(int), 0);
+            if(numofrecv>0)
+            {
+                while(numofrecv--)
+                {
+                    chunk_meta *current_chunk = (chunk_meta*)calloc(sizeof(chunk_meta),1);
+                    recv(client_socket, current_chunk, sizeof(chunk_meta), 0);
+                    char *filename = (char*)calloc(sizeof(char), 50);
+                    strncpy(filename, current_chunk->filename, 50);
+                    
+                }
+            }
         }
         close(client_socket);
         // printf("want to continue/exit?1:0\t");
