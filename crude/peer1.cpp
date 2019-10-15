@@ -53,6 +53,7 @@ int main()
 {
     pthread_t server1, server2, server3;
     ip_data *ip = (ip_data*)calloc(sizeof(ip_data),1);
+    strncpy(ip->ip,"127.0.0.1", strlen("127.0.0.1"));
     ip->port = 50505;
     pthread_create(&server1, NULL, routine, (void*)ip);
     ip = (ip_data*)calloc(sizeof(ip_data),1);
@@ -64,4 +65,11 @@ int main()
     pthread_detach(server1);
     pthread_detach(server2);
     pthread_detach(server3);
+    int sock = -1;
+    sock=socket(AF_INET, SOCK_STREAM, 0);
+    sockaddr_in *client = (sockaddr_in*)calloc(sizeof(sockaddr_in), 1);
+    client->sin_family = AF_INET;
+    client->sin_port = htons(50505);
+    client->sin_addr.s_addr = inet_addr("127.0.0.1");
+    connect(sock, (sockaddr*)client, sizeof(sockaddr));
 }
