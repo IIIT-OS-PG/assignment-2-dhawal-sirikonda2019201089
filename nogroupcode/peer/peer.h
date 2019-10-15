@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cmath>
 
 #include <map>
 #include <string>
@@ -11,6 +12,7 @@
 
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <openssl/sha.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -24,16 +26,14 @@
 #define CURRENT_IP "127.0.0.1"
 
 using namespace std;
-struct chunk_sha
-{
-    char sha[20];
-};
+
 
 struct chunk_meta
 {
     int chunk_num;
+    int uid;
     int total_chunks;
-    struct chunk_sha;
+    char chunk_sha[20];
     char filename[50];
 };
 

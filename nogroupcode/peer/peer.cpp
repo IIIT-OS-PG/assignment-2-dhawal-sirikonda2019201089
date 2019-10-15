@@ -1,7 +1,8 @@
 #include "peer.h"
 
-int peer_client(map<string, chunk_meta*>& peer_data_map,int *login_status, int *port, )
+int peer_client(map<string, vector<chunk_meta*>*>& peer_data_map,int *login_status, int *port, )
 {
+    int usr_id = -1;
     int option = -1;
     int sock_fd = -1;
     sockaddr_in* server = (sockaddr_in*)calloc(1, sizeof(sockaddr));
@@ -66,7 +67,7 @@ int peer_client(map<string, chunk_meta*>& peer_data_map,int *login_status, int *
         {
             if(!*login_status)
             {
-
+                
             }
             else
             {
@@ -77,7 +78,61 @@ int peer_client(map<string, chunk_meta*>& peer_data_map,int *login_status, int *
         {
             if(*login_status)
             {
+                printf("enter filename\t");
+                char *filename = (char*)calloc(sizeof(char), 50);
+                scanf("%s",filename);
+                
+                if(peer_data_map.find(string(filename))!=peer_data_map.end())
+                {
+                    printf("file already uploaded\n");
+                    continue;
+                }
+                else
+                {
+                    peer_data_map[string(filename)] = new vector<chunk_meta*>();
+                }
 
+                int fd = open(filename, O_RDONLY);
+                if(fd<0)
+                {
+                    printf("file not opened for upload\n");
+                    free(filename);
+                    continue;
+                }
+                while((sock_fd = socket(AF_INET, SOCK_STREAM,0))==-1)
+                    printf("socket creation error\n");
+
+                while(connect(sock_fd, (sockaddr*)server, sizeof(sockaddr))==-1)
+                    printf("connect failed\n");
+
+                
+                while(sizeof(int)!=send(sock_fd, &option, sizeof(int),0))
+                    printf("send error for command\n");
+
+                
+                
+                struct stat *stat_buff = (struct stat*)calloc(sizeof(struct stat),1);
+                fstat(fd,stat_buff);
+                char *buffer = (char*)calloc(CHUNK_SIZE, sizeof(char));
+                int read_bytes =0;
+                int chunk_num=1;
+                
+                while((read_bytes = read(fd, buffer, CHUNK_SIZE))>0)
+                {
+                    chunk_meta *current_chunk_meta = (chunk_meta*)calloc(sizeof(chunk_meta),1);
+                    char *digest = (char*)calloc(sizeof(char), SHA_DIGEST_LENGTH);
+                    SHA1((const unsigned char *)buffer, read_bytes,(unsigned char*) digest);
+                    memcpy(current_chunk_meta->chunk_sha, digest, 20);
+                    memcpy(current_chunk_meta->filename, filename, 50);
+                    current_chunk_meta->chunk_num =chunk_num++;
+                    current_chunk_meta->total_chunks = ceil(stat_buff->st_size/CHUNK_SIZE);
+                    current_chunk_meta->uid = usr_id;
+                    peer_data_map[string(filename)]->push_back(current_chunk_meta);
+                    while(sizeof(chunk_meta)!=send(sock_fd, current_chunk_meta, sizeof(chunk_meta),0))
+                        printf("failed to send chunk sha data\n");
+                }
+
+                close(sock_fd);
             }
             else
             {
