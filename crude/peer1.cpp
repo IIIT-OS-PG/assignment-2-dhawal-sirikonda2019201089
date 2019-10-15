@@ -65,11 +65,46 @@ int main()
     pthread_detach(server1);
     pthread_detach(server2);
     pthread_detach(server3);
+    
+    int dest=open("dest",O_WRONLY|O_TRUNC|O_CREAT,0);
     int sock = -1;
+    int chunk=1;
+    void *buf = calloc(sizeof(char),chunk_sz);
+    int r_bytes;
     sock=socket(AF_INET, SOCK_STREAM, 0);
     sockaddr_in *client = (sockaddr_in*)calloc(sizeof(sockaddr_in), 1);
     client->sin_family = AF_INET;
     client->sin_port = htons(50505);
     client->sin_addr.s_addr = inet_addr("127.0.0.1");
+
     connect(sock, (sockaddr*)client, sizeof(sockaddr));
+    send(sock, &chunk, sizeof(int), 0);
+    r_bytes=recv(sock, buf, chunk_sz,0);
+    lseek(dest,(chunk-1)*chunk_sz,SEEK_SET);
+    read(dest,buf, r_bytes);
+    close(sock);
+    sock=socket(AF_INET, SOCK_STREAM, 0);
+    sockaddr_in *client = (sockaddr_in*)calloc(sizeof(sockaddr_in), 1);
+    client->sin_family = AF_INET;
+    client->sin_port = htons(50505);
+    client->sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    connect(sock, (sockaddr*)client, sizeof(sockaddr));
+    chunk=3;
+    send(sock, &chunk, sizeof(int), 0);
+    r_bytes=recv(sock, buf, chunk_sz,0);
+    lseek(dest,(chunk-1)*chunk_sz,SEEK_SET);
+    read(dest,buf, r_bytes);
+    close(sock);
+
+    connect(sock, (sockaddr*)client, sizeof(sockaddr));
+    chunk=2;
+    send(sock, &chunk, sizeof(int), 0);
+    r_bytes=recv(sock, buf, chunk_sz,0);
+    lseek(dest,(chunk-1)*chunk_sz,SEEK_SET);
+    read(dest,buf, r_bytes);
+    close(sock);
+
+    close(dest);
+    return 0;
 }
