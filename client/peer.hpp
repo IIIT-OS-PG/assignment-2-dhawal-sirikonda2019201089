@@ -3,8 +3,8 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <cstddef>
-#include <string.h>
+#include <cstring>
+#include <cmath>
 
 #include <vector>
 #include <map>
@@ -20,6 +20,8 @@
 #include <sys/types.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+
+#include <openssl/sha.h>
 
 #define CHUNK_SIZE 524288
 
@@ -68,8 +70,17 @@ struct chunks_meta
     int chunk_num;
     int group_id;
     int is_shared;
-    char filename[50];
     char chunk_sha[20];
+    char filename[50];
+};
+
+struct chunk
+{
+    int chunks_num;
+    int total_num_of_chunks;
+    int size_of_current_chunk;
+    char chunkdata[CHUNK_SIZE];
+    char filename[50];
 };
 
 struct ip_port_struct
@@ -89,9 +100,8 @@ struct pair_cmp
 struct download_file_struct
 {
     int chunk_number;
-    char ip[20];
-    char port[10];
-    char filename[50];
+    char filename1[50];
+    ip_port_struct ip_port_data;
 };
 
 struct peer_data

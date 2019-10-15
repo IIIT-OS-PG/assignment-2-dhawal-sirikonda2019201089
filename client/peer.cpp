@@ -1,7 +1,55 @@
-#include "peer.h"
+#include "peer.hpp"
+
 void *download_file(void *args)
 {
+    download_file_struct *current_args = (download_file_struct*)args;
+    char *filename = new char [50]();
+    strncpy(filename, current_args->filename1, 50);
+    int *download_file = new int[1];
+    *download_file = open(filename, O_WRONLY|O_CREAT|O_TRUNC, 0644);
+    close(*download_file);
+    while(current_args)
+    {
+        int *clinet_sock_fd = new int [1];
+        while((*clinet_sock_fd = socket(AF_INET, SOCK_STREAM, 0))==-1)
+        {
+            printf("error creating socket in thread for file %s and chunk num %d\n",
+            filename, current_args->chunk_number);
+        }
 
+        sockaddr_in *server_peer = new sockaddr_in[1]();
+        char *ip = new char[20]();
+        strncpy(ip,current_args->ip_port_data.ip, 20);
+        server_peer->sin_addr.s_addr = inet_addr(ip);
+        server_peer->sin_port = htons(atoi(current_args->ip_port_data.port));
+        server_peer->sin_family = AF_INET;
+        int *connection_status = new int[1];
+        int *num_of_attempts = new int[1];
+        while((*connection_status = connect(*clinet_sock_fd, 
+        (sockaddr*)server_peer, sizeof(sockaddr_in)))==-1 && *num_of_attempts < 10)
+        {
+            printf("Connection failed to %s %s\n",ip, current_args->ip_port_data.port);
+            *num_of_attempts++;
+        }
+
+        if(*connection_status == -1)
+        {
+            printf("Failed to fetch current %d chunks of file %s\n",
+            current_args->chunk_number, filename);
+            continue;
+        }
+        chunk *current_chunk = new chunk[1];
+
+        
+        if(recv(*clinet_sock_fd, current_chunk, sizeof(chunk), 0)!=sizeof(chunk))
+        {
+            printf("recieved improprt chunksfor %s %d\n", 
+                filename, current_chunk->chunks_num);
+        }
+
+        
+        current_args++;
+    }
 }
 int client_work(int *logged_in, peer_data * current_peer_data, pthread_mutex_t peer_data_lock)
 {
@@ -28,7 +76,7 @@ int client_work(int *logged_in, peer_data * current_peer_data, pthread_mutex_t p
                 {
                     printf("create user socket creation failed\n");
                 }
-                struct sockaddr_in *server = new sockaddr_in[1];
+                struct sockaddr_in *server = new sockaddr_in[1]();
                 server->sin_family = AF_INET;
                 server->sin_port = htons(atoi(TRACKER_1_PORT));
                 (server->sin_addr).s_addr = inet_addr(TRACKER_1_IP);
@@ -104,7 +152,7 @@ int client_work(int *logged_in, peer_data * current_peer_data, pthread_mutex_t p
                 {
                     printf("login user socket creation failed\n");
                 }
-                sockaddr_in *server = new sockaddr_in[1];
+                sockaddr_in *server = new sockaddr_in[1]();
                 server->sin_family = AF_INET;
                 server->sin_port = htons(atoi(TRACKER_1_PORT));
                 (server->sin_addr).s_addr = inet_addr(TRACKER_1_IP);
@@ -181,7 +229,7 @@ int client_work(int *logged_in, peer_data * current_peer_data, pthread_mutex_t p
                                 {
                                     if(((user_groups*)buffer)->groups[i]!=0)
                                     {
-                                        set<string>* new_file_set = new set<string>();
+                                        vector<string>* new_file_set = new vector<string>();
                                         pthread_mutex_lock(&peer_data_lock);
                                         current_peer_data->group_map[((user_groups*)buffer)->groups[i]] = new_file_set;
                                         pthread_mutex_unlock(&peer_data_lock);
@@ -207,10 +255,11 @@ int client_work(int *logged_in, peer_data * current_peer_data, pthread_mutex_t p
                                         }
                                         else
                                         {
-                                            set< pair<int, chunks_meta*>,pair_cmp> *current_chunk_meta_set = new  set< pair<int, chunks_meta*>,pair_cmp>();
+                                            set<pair<int, chunks_meta*>> *current_chunk_meta_set = new  set<pair<int, chunks_meta*>>[1];
                                             current_chunk_meta_set->insert(make_pair(new_chunk_meta->chunk_num, new_chunk_meta));
                                             current_peer_data->file_map[string(new_chunk_meta->filename)]=current_chunk_meta_set;
                                         }
+                                        //send a copy to tracker too
                                         pthread_mutex_unlock(&peer_data_lock);
                                         bzero(buffer, sizeof(chunks_meta));
                                     }
@@ -252,7 +301,7 @@ int client_work(int *logged_in, peer_data * current_peer_data, pthread_mutex_t p
                 {
                     printf("create group socket creation failed\n");
                 }
-                sockaddr_in *server = new sockaddr_in[1];
+                sockaddr_in *server = new sockaddr_in[1]();
                 server->sin_family = AF_INET;
                 server->sin_port = htons(atoi(TRACKER_1_PORT));
                 (server->sin_addr).s_addr = inet_addr(TRACKER_1_IP);
@@ -310,7 +359,7 @@ int client_work(int *logged_in, peer_data * current_peer_data, pthread_mutex_t p
                     pthread_mutex_lock(&peer_data_lock);
                     if(current_peer_data->group_map.find(*new_group_id)==current_peer_data->group_map.end())
                     {
-                        current_peer_data->group_map[*new_group_id]=new set<string>[1];
+                        current_peer_data->group_map[*new_group_id]=new set<string>[1]();
                     }
                     pthread_mutex_unlock(&peer_data_lock);
                 }
@@ -332,7 +381,7 @@ int client_work(int *logged_in, peer_data * current_peer_data, pthread_mutex_t p
                 {
                     printf("join group socket creation failed\n");
                 }
-                sockaddr_in *server = new sockaddr_in[1];
+                sockaddr_in *server = new sockaddr_in[1]();
                 server->sin_family = AF_INET;
                 server->sin_port = htons(atoi(TRACKER_1_PORT));
                 (server->sin_addr).s_addr = inet_addr(TRACKER_1_IP);
@@ -422,7 +471,7 @@ int client_work(int *logged_in, peer_data * current_peer_data, pthread_mutex_t p
                 {
                     printf("list group error creating socket\n");
                 }
-                sockaddr_in *server = new sockaddr_in[1];
+                sockaddr_in *server = new sockaddr_in[1]();
                 server->sin_family = AF_INET;
                 server->sin_port = htons(atoi(TRACKER_1_PORT));
                 (server->sin_addr).s_addr = inet_addr(TRACKER_1_IP);
@@ -525,6 +574,48 @@ int client_work(int *logged_in, peer_data * current_peer_data, pthread_mutex_t p
                 printf("enter file name\t");
                 scanf("%s", filename);
                 pthread_mutex_lock(&peer_data_lock);
+                if(current_peer_data->group_map[*group_number]->find(string(filename))==current_peer_data->group_map[*group_number]->end())
+                {
+                    if(current_peer_data->file_map.find(string(filename))==current_peer_data->file_map.end())
+                    {
+
+                        vector<int, chunks_meta*> *vector_chunk = new vector<int, chunks_meta*>[1];
+                        current_peer_data->file_map[string(filename)] = vector_chunk;
+                        int fd = open(filename, O_RDONLY);
+                        int total_chunks = ceil(lseek(fd, 0, SEEK_END) / CHUNK_SIZE);
+                        lseek(fd, 0, SEEK_SET);
+                        if(fd>0)
+                        {
+                            int chunk_number = 0;
+                            int read_bytes = 0;
+                            char *buffer = new char [CHUNK_SIZE]();
+                            while((read_bytes=read(fd, buffer, CHUNK_SIZE))>0)   
+                            {
+                                chunk_number++;
+                                char* hash = new char[SHA_DIGEST_LENGTH];
+                                SHA1(buffer, read_bytes, hash);
+                                chunks_meta * current_chunk = new chunks_meta[1]();
+
+                                memcpy(current_chunk->chunk_sha,hash, SHA_DIGEST_LENGTH);
+                                current_chunk->chunk_num = chunk_number;
+                                memcpy(current_chunk->filename, filename, 50);
+                                current_chunk->group_id=*group_number;
+                                current_chunk->is_shared = 1;
+                                current_chunk->total_num_of_chunks = total_chunks;
+                                
+                                current_peer_data->file_map[string(filename)]->insert(make_pair(chunk_number, current_chunk));
+
+                                memset(buffer,'\0',CHUNK_SIZE);
+                            }
+                            current_peer_data->group_map[*group_number]->insert(string(filename));
+                        }
+                        else
+                        {
+                            printf("file not opened\n");
+                            continue;
+                        }
+                    }
+                }
                 if(current_peer_data->file_map.find(string(filename))!=current_peer_data->file_map.end())
                 {
                     int *client_sock_fd = new int[1];
@@ -532,7 +623,7 @@ int client_work(int *logged_in, peer_data * current_peer_data, pthread_mutex_t p
                     {
                         printf("upload file error creating socket\n");
                     }
-                    sockaddr_in *server = new sockaddr_in[1];
+                    sockaddr_in *server = new sockaddr_in[1]();
                     server->sin_family = AF_INET;
                     server->sin_port = htons(atoi(TRACKER_1_PORT));
                     (server->sin_addr).s_addr = inet_addr(TRACKER_1_IP);
@@ -569,6 +660,7 @@ int client_work(int *logged_in, peer_data * current_peer_data, pthread_mutex_t p
                     {
                         printf("upload file send command failed\n");
                     }
+
                     for(set< pair<int, chunks_meta*>,pair_cmp>::iterator i = current_peer_data->file_map[string(filename)]->begin(); i != current_peer_data->file_map[string(filename)]->end();i++)
                     {
                         while(sizeof(chunks_meta)==send(*client_sock_fd, i->second, sizeof(chunks_meta),0))
@@ -591,67 +683,69 @@ int client_work(int *logged_in, peer_data * current_peer_data, pthread_mutex_t p
             if(*logged_in)
             {
                 int *client_sock_fd = new int[1];
-                    while((*client_sock_fd = socket(AF_INET, SOCK_STREAM, 0))!=-1)
-                    {
-                        printf("download file error creating socket\n");
-                    }
-                    sockaddr_in *server = new sockaddr_in[1];
-                    server->sin_family = AF_INET;
-                    server->sin_port = htons(atoi(TRACKER_1_PORT));
-                    (server->sin_addr).s_addr = inet_addr(TRACKER_1_IP);
+                while((*client_sock_fd = socket(AF_INET, SOCK_STREAM, 0))!=-1)
+                {
+                    printf("download file error creating socket\n");
+                }
+                sockaddr_in *server = new sockaddr_in[1]();
+                server->sin_family = AF_INET;
+                server->sin_port = htons(atoi(TRACKER_1_PORT));
+                (server->sin_addr).s_addr = inet_addr(TRACKER_1_IP);
 
-                    int *connection_tries = new int[1];
-                    int *connection_status = new int[1];
+                int *connection_tries = new int[1];
+                int *connection_status = new int[1];
 
+                while(((*connection_status = connect(*client_sock_fd, 
+                        (sockaddr*)server, sizeof(sockaddr))) == -1) && (*connection_tries < 10))
+                {
+                    printf("download file failed to connect to ip %s port %s\n", TRACKER_1_IP, TRACKER_1_PORT);
+                    *connection_tries++;
+                }
+                if(*connection_tries>10)
+                {
+                    (server->sin_addr).s_addr = inet_addr(TRACKER_2_IP);
+                    server->sin_port = htons(atoi(TRACKER_2_PORT));
                     while(((*connection_status = connect(*client_sock_fd, 
-                            (sockaddr*)server, sizeof(sockaddr))) == -1) && (*connection_tries < 10))
+                        (sockaddr*)server, sizeof(sockaddr))) == -1) && (*connection_tries < 10))
                     {
                         printf("download file failed to connect to ip %s port %s\n", TRACKER_1_IP, TRACKER_1_PORT);
                         *connection_tries++;
                     }
-                    if(*connection_tries>10)
+                    if(*connection_tries >10)
                     {
-                        (server->sin_addr).s_addr = inet_addr(TRACKER_2_IP);
-                        server->sin_port = htons(atoi(TRACKER_2_PORT));
-                        while(((*connection_status = connect(*client_sock_fd, 
-                            (sockaddr*)server, sizeof(sockaddr))) == -1) && (*connection_tries < 10))
-                        {
-                            printf("download file failed to connect to ip %s port %s\n", TRACKER_1_IP, TRACKER_1_PORT);
-                            *connection_tries++;
-                        }
-                        if(*connection_tries >10)
-                        {
-                            printf("TRACKER 1 and 2 both not getting connected\n");
-                            return -1;
-                        }
+                        printf("TRACKER 1 and 2 both not getting connected\n");
+                        return -1;
                     }
-                    command *download_command = new command[1];
-                    download_command->user_id =*logged_in;
-                    download_command->type_of_command = 11;
-                    while(sizeof(command)!=send(*client_sock_fd, download_command, sizeof(command),0))
+                }
+                command *download_command = new command[1];
+                download_command->user_id =*logged_in;
+                download_command->type_of_command = 11;
+                while(sizeof(command)!=send(*client_sock_fd, download_command, sizeof(command),0))
+                {
+                    printf("download command send failed\n");
+                }
+                int *size_of_file = new int[1];
+                if(recv(*client_sock_fd,size_of_file, sizeof(int),0 ) != sizeof(int))
+                {
+                    printf("download file ip recieve error\n");
+                }
+                else
+                {
+                    int *number_of_ip = new int[1];
+                    *number_of_ip = (*size_of_file/CHUNK_SIZE);
+                    download_file_struct *ip_port_data = new download_file_struct[*number_of_ip];
+                    if(sizeof(download_file_struct)*(*number_of_ip)!=recv(*client_sock_fd, ip_port_data, sizeof(download_file_struct)*(*number_of_ip), 0))
                     {
-                        printf("download command send failed\n");
+                        printf("Total file not present only partly available\n");
                     }
-                    int *size_of_file = new int[1];
-                    if(recv(*client_sock_fd,size_of_file, sizeof(int),0 ) != sizeof(int))
-                    {
-                        printf("download file ip recieve error\n");
-                    }
-                    else
-                    {
-                        int *number_of_ip = new int[1];
-                        *number_of_ip = (*size_of_file/CHUNK_SIZE);
-                        download_file_struct *ip_port_data = new download_file_struct[*number_of_ip];
-                        if(sizeof(download_file)*(*number_of_ip)!=recv(*client_sock_fd, ip_port_data, sizeof(download_file)*(*number_of_ip), 0))
-                        {
-                            printf("Total file not present only partly available\n");
-                        }
-                        pthread_t *download_thread = new pthread_t[1];
-                        pthread_attr_t *attr = new pthread_attr_t[1];
-                        pthread_attr_init(attr);
-                        pthread_create(download_thread, attr, download_file, ip_port_data);
-                        pthread_detach(*download_thread);
-                    }
+                    pthread_t *download_thread = new pthread_t[1];
+                    pthread_attr_t *attr = new pthread_attr_t[1];
+                    pthread_attr_init(attr);
+                    pthread_create(download_thread, attr, download_file, ip_port_data);
+                    pthread_detach(*download_thread);
+                    //donot delete ip_port_data
+                }
+                close(*client_sock_fd);
             }
         }
         else if(*option == 12)

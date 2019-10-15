@@ -1,6 +1,6 @@
 #ifndef BACKGROUND_SERVER_H_
 #define BACKGROUND_SERVER_H_
-#include "peer.h"
+#include "peer.hpp"
 
 struct ip_port
 {
