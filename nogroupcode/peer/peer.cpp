@@ -238,7 +238,7 @@ int peer_client(map<string, vector<chunk_meta*>*>& peer_data_map,int *login_stat
         {
             if(*login_status)
             {
-                
+
             }
             else
             {
@@ -258,6 +258,10 @@ int peer_client(map<string, vector<chunk_meta*>*>& peer_data_map,int *login_stat
                 
                 while(sizeof(int)!=send(sock_fd, &option, sizeof(int),0))
                     printf("send error for command\n");
+                
+                while(sizeof(int)!=send(sock_fd, &usr_id, sizeof(int),0))
+                    printf("send error for command\n");
+
                 close(sock_fd);
                 int fd = open(to_string(usr_id).c_str(), O_CREAT|O_WRONLY|O_TRUNC, 0644);
                 if(fd<0)

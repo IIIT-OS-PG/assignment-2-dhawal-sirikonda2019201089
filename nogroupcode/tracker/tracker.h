@@ -54,6 +54,6 @@ struct login_struct
 };
 
 
-int tracker(map<int, login_struct*>& live_user_map, map<int, login_struct*>& user_map, map<int, set<string>*>& filemap, map<string, vector<chunk_meta*>*>& file_chunkmap);
+int tracker_method(map<int, login_struct*>& live_user_map, map<int, login_struct*>& user_map, map<int, set<string>*>& filemap, map<string, vector<chunk_meta*>*>& file_chunkmap);
 
 #endif

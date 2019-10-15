@@ -1,6 +1,6 @@
 #include "tracker.h"
 
-int tracker(map<int, login_struct*>& usr_map, map<int, login_struct*>& live_user_map, map<int, set<string>*>& userfilemap, map<string, vector<chunk_meta*>*>& file_chunkmap)
+int tracker_method(map<int, login_struct*>& usr_map, map<int, login_struct*>& live_user_map, map<int, set<string>*>& userfilemap, map<string, vector<chunk_meta*>*>& file_chunkmap)
 {
     int sock_fd = -1;
     while((sock_fd=socket(AF_INET, SOCK_STREAM, 0))==-1)
@@ -109,9 +109,19 @@ int tracker(map<int, login_struct*>& usr_map, map<int, login_struct*>& live_user
                 }
             }
         }
+        if(command_type == 4)
+        {
+            
+        }
         if(command_type == 5)
         {
-            live_user_map[]
+            int user_id = -1;
+            recv(client_socket, &user_id, sizeof(int),0);
+            if(live_user_map.find(user_id)!=live_user_map.end())
+            {
+                live_user_map.erase(user_id);
+                userfilemap.erase(user_id);
+            }
         }
         close(client_socket);
         printf("want to list files yes/no (1|0)\t");
