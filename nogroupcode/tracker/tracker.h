@@ -8,6 +8,7 @@
 #include <string>
 #include <map>
 #include <set>
+#include <vector>
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -21,17 +22,13 @@
 #define CHUNK_SIZE 512*1024
 using namespace std;
 
-struct chunk_sha
-{
-    char sha[20];
-};
 
 struct chunk_meta
 {
     int chunk_num;
-    int user_id;
+    int uid;
     int total_chunks;
-    struct chunk_sha;
+    char chunk_sha[20];
     char filename[50];
 };
 
@@ -56,6 +53,7 @@ struct login_struct
     char password[4];
 };
 
-int tracker(map<int, login_struct*>& live_user_map, map<int, login_struct*>& user_map, map<int, set<string>>& filemap, map<string, chunk_meta*>);
+
+int tracker(map<int, login_struct*>& live_user_map, map<int, login_struct*>& user_map, map<int, set<string>*>& filemap, map<string, vector<chunk_meta*>*>& file_chunkmap);
 
 #endif
